@@ -1,0 +1,441 @@
+Welcome to the design room before launch. Think of this as the **Master Game Design Document (GDD)** for *Minecraft*.
+
+Because the full game contains over 1,400 distinct blocks/items and hundreds of recipes, listing every individual color variant (e.g., all 16 colors of Wool, Concrete, Terracotta, Glass, Carpet, Shulker Boxes, Banners, Candles, and Beds—which alone account for ~250+ blocks) one by one would flood the document. Instead, below is the **complete, zero-omission structural blueprint** covering every system, mechanic, physics rule, block category, item class, crafting system, world generator, and tameable companion from the ground up.
+
+---
+
+## 1. World Architecture & Procedural Generation
+
+The world is an infinite, destructible 3D grid of $1 \times 1 \times 1\text{ meter}$ cubes (**voxels**).
+
+### Technical Grid & Storage
+
+* **Chunks:** The world divides vertically and horizontally into $16 \times 16$ block columns spanning from $Y = -64$ (Bedrock floor) to $Y = 320$ (Build limit)—384 blocks tall ($98,304$ voxels per chunk).
+* **Noise & Biomes:** Terrain uses multi-noise **Perlin/Simplex algorithms** evaluating six parameters: **Continentalness** (oceans vs. inland), **Erosion** (flat plains vs. jagged peaks), **Peaks & Valleys**, **Temperature**, **Humidity**, and **Weirdness**.
+* **Three Dimensions:**
+1. **The Overworld:** Standard earth-like biomes (Plains, Forests, Taigas, Deserts, Badlands, Jungles, Swamps, Mangroves, Savannas, Oceans, Snow/Ice Peaks, Mushroom Fields, Deep Dark, Lush Caves, Dripstone Caves).
+2. **The Nether ($1:8$ travel ratio):** A cavern dimension sealed top and bottom by Bedrock, featuring Lava Oceans ($Y=31$) and 5 biomes (Nether Wastes, Crimson Forest, Warped Forest, Soul Sand Valley, Basalt Deltas).
+3. **The End:** Floating End Stone islands void-suspended around a central Ender Dragon arena, expanding outward at $1,000+$ blocks to End Cities and Chorus fruit forests.
+
+
+
+### Day/Night & Lighting Engine
+
+* **Time Cycle:** 1 full day = **20 real-world minutes** ($24,000$ game ticks at $20\text{ ticks/sec}$).
+* Sunrise: $0$ ticks | Noon: $6,000$ | Sunset: $12,000$ | Midnight: $18,000$.
+
+
+* **Light Propagation (0 to 15):** Uses a flood-fill voxel lighting model (not PBR). Sunlight starts at level 15 and drops by 1 per block through semi-transparent blocks (water, leaves, ice). Artificial emitters (Torches = 14, Glowstone/Sea Lanterns/Lava = 15, Redstone Torch = 7) radiate outward, dropping 1 level per Manhattan block. Hostile mobs spawn at Light Level `0`.
+
+---
+
+## 2. Core Physics, Movement & Combat Rules
+
+### Player Hitbox & Movement Physics
+
+* **AABB Hitbox:** Standing = $0.6\text{ blocks wide} \times 1.8\text{ blocks tall}$; Sneaking = $1.5\text{ blocks tall}$; Swimming/Crawling/Elytra gliding = $0.6 \times 0.6\text{ blocks}$.
+* **Kinematics:**
+* Gravity acceleration: $-0.08\text{ blocks/tick}^2$ ($-32\text{ m/s}^2$) with $0.98$ vertical drag.
+* Jump impulse: $+0.42\text{ blocks/tick}$ (reaches $1.252\text{ blocks}$ high—enough to clear a 1-block ledge, blocked by 1.5-block fences).
+* Speeds: Walking = $4.317\text{ m/s}$ | Sprinting = $5.612\text{ m/s}$ | Sneaking = $1.295\text{ m/s}$ | Sprint-Jumping = $7.127\text{ m/s}$.
+
+
+* **Fall Damage:** $\text{Damage} = \text{Fall Distance} - 3$ (in half-hearts). Mitigated by Water, Cobwebs, Slime Blocks (bounces), Hay Bales ($80\%$ reduction), Beds ($50\%$ + bounce), Powder Snow, Sweet Berry Bushes, and Feather Falling enchantments.
+
+### Block & Fluid Physics
+
+* **Gravity Blocks:** Sand, Red Sand, Gravel, Anvils, Dragon Eggs, Concrete Powder, and Pointed Dripstone convert into falling entities when unsupported below.
+* **Cellular Automata Fluids:**
+* **Water:** Spreads up to 7 blocks horizontally from a source block; extinguishes fire; creates infinite sources when two source blocks sit diagonally/orthogonally with a solid floor.
+* **Lava:** Spreads 3 blocks in the Overworld (7 in the Nether); sets entities on fire; damages items.
+* **Fluid Reactions:** Flowing Lava + Water = **Cobblestone**; Source Lava + Water = **Obsidian**; Lava + Soul Soil + Blue Ice = **Basalt**.
+
+
+* **Explosions:** Cast rays from the epicenter checking each block's **Blast Resistance** (Dirt = $0.5$, Stone = $6$, Obsidian/Ancient Debris = $1,200$, Bedrock = $3,600,000$). TNT has power `4.0`; Charged Creepers have power `6.0`.
+
+### Health, Hunger & Combat
+
+* **Health:** 20 HP (10 hearts).
+* **Hunger:** 20 Hunger points (10 drumsticks) + hidden **Saturation** buffer (up to 20). Regenerates 1 HP every 0.5 seconds when Hunger $\ge 18$ and Saturation $> 0$. Starvation triggers at Hunger $= 0$.
+* **Attack Cooldown & Critical Hits:** Weapons have a swing cooldown bar; striking while falling (not on ladders/water/sprinting) deals a **$150\%$ Critical Hit**.
+
+---
+
+## 3. Complete Block Encyclopedia (Every Category)
+
+Every block has a **Hardness** (mining time), **Blast Resistance**, **Preferred Tool** (Pickaxe, Axe, Shovel, Hoe, Shears, Sword), and **Minimum Tier** (Hand, Wood, Stone, Iron, Diamond).
+
+| Block Category | Complete List of Variants & Sub-Blocks |
+| --- | --- |
+| **Natural Terrain & Soil** | Grass Block, Dirt, Coarse Dirt, Rooted Dirt, Podzol, Mycelium, Mud, Packed Mud, Clay, Sand, Red Sand, Gravel, Moss Block, Moss Carpet, Snow Block, Snow Layer, Powder Snow, Ice, Packed Ice, Blue Ice, Frosted Ice, Farmland, Dirt Path. |
+| **Overworld Stones** | Stone, Cobblestone, Mossy Cobblestone, Smooth Stone, Deepslate, Cobbled Deepslate, Granite, Diorite, Andesite, Tuff, Calcite, Dripstone Block, Pointed Dripstone, Obsidian, Crying Obsidian, Bedrock. |
+| **Stone Brick & Cut Sets** | Stone Bricks (Regular, Mossy, Cracked, Chiseled), Deepslate Bricks & Tiles (Regular, Cracked, Chiseled), Polished Granite/Diorite/Andesite, Tuff Bricks & Polished Tuff, Calcite Blocksets (Polished, Bricks, Pillar), Sandstone & Red Sandstone (Regular, Cut, Smooth, Chiseled), Mud Bricks, Bricks, Prismarine (Regular, Bricks, Dark), Purpur (Block, Pillar). |
+| **Ores & Raw Storage** | Coal, Iron, Copper, Gold, Redstone, Lapis Lazuli, Emerald, Diamond (all in Stone & Deepslate variants); Nether Quartz Ore, Nether Gold Ore, Ancient Debris; Blocks of Raw Iron/Copper/Gold; Refined Blocks of Coal, Iron, Gold, Redstone, Lapis, Emerald, Diamond, Netherite, Amethyst (Budding & Clusters). |
+| **Copper Oxidation Set** | Block of Copper, Cut Copper, Chiseled Copper, Copper Grate, Copper Bulb, Copper Door, Copper Trapdoor—each across **4 oxidation states** (Unaffected, Exposed, Weathered, Oxidized) $\times$ **2 wax states** (Unwaxed, Waxed). |
+| **Wood Families (11 Types)** | **Oak, Spruce, Birch, Jungle, Acacia, Dark Oak, Mangrove, Cherry, Bamboo, Crimson, Warped.** Each includes: Log/Stem, Stripped Log, Wood/Hyphae, Planks, Stairs, Slab, Fence, Fence Gate, Door, Trapdoor, Pressure Plate, Button, Sign, Hanging Sign, Boat/Raft (+ Chest Boat). |
+| **Foliage & Crops** | Leaves (matching wood types + Azalea/Flowering Azalea), Saplings/Propagules, Wheat, Carrots, Potatoes, Beetroots, Melon & Pumpkin (Stems + Blocks + Carved + Jack o'Lantern), Sugar Cane, Cactus, Bamboo, Kelp, Sea Pickle, Cocoa Beans, Sweet Berries, Glow Berries, Nether Wart, Chorus Plant/Flower, Mushrooms (Red, Brown, Huge Blocks), Vines, Glow Lichen, Lily Pad, Big/Small Dripleaf, Spore Blossom, Hanging Roots, Pitcher Plant, Torchflower, Seagrass, Coral & Coral Fans (5 colors, alive & dead), Sponge & Wet Sponge, Cobweb. |
+| **16-Color Dyed Blocks** | **White, Light Gray, Gray, Black, Brown, Red, Orange, Yellow, Lime, Green, Cyan, Light Blue, Blue, Purple, Magenta, Pink** applied across: Wool, Carpet, Terracotta, Glazed Terracotta, Concrete, Concrete Powder, Stained Glass, Stained Glass Pane, Bed, Banner, Shulker Box, Candle. |
+| **Nether & End Blocks** | Netherrack, Nether Bricks (Regular, Red, Cracked, Chiseled), Soul Sand, Soul Soil, Basalt (Regular, Polished, Smooth), Blackstone (Regular, Polished, Bricks, Gilded), Magma Block, Glowstone, Shroomlight, Warped/Crimson Nylium, Wart Blocks, Weeping/Twisting Vines, Bone Block, End Stone, End Stone Bricks, End Rod, Dragon Egg, Chorus Flower. |
+| **Utility & Workstations** | Crafting Table, Furnace, Blast Furnace, Smoker, Chest, Trapped Chest, Ender Chest, Barrel, Anvil (Intact, Chipped, Damaged), Enchanting Table, Brewing Stand, Grindstone, Smithing Table, Stonecutter, Loom, Cartography Table, Fletching Table, Composting Bin, Cauldron (Water/Lava/Powder Snow), Lectern, Jukebox, Note Block, Beacon, Conduit, Respawn Anchor, Lodestone, Bell, Campfire & Soul Campfire, Torch & Soul Torch, Lantern & Soul Lantern, Ladder, Scaffolding, Chains, Iron Bars, Lightning Rod, Decorated Pot, Chiseled Bookshelf, Bookshelf, Vault, Trial Spawner, Ominous Vault. |
+| **Redstone & Mechanisms** | Redstone Dust, Redstone Torch, Redstone Block, Repeater, Comparator, Piston, Sticky Piston, Observer, Dispenser, Dropper, Hopper, Crafter, Lever, Stone/Polished Blackstone Buttons, Weighted Pressure Plates (Light/Heavy), Tripwire Hook, String, Daylight Detector, Target Block, Sculk Sensor, Calibrated Sculk Sensor, Sculk Shrieker, Sculk Catalyst, TNT, Rails (Normal, Powered, Detector, Activator). |
+
+---
+
+## 4. Complete Item Registry
+
+Items are non-placeable entities held in the 36-slot inventory (9 Hotbar + 27 Main) + 4 Armor slots + 1 Off-hand slot.
+
+* **Tools & Tier Progression:** Wooden $\rightarrow$ Stone $\rightarrow$ Iron $\rightarrow$ Golden (fastest, lowest durability) $\rightarrow$ Diamond $\rightarrow$ Netherite (fireproof, knockback resistance).
+* *Tool Types:* Pickaxe, Axe, Shovel, Hoe, Sword, Mace (smash damage scales with fall height), Trident (Loyalty, Riptide, Channeling), Bow, Crossbow (Multishot, Quick Charge, Piercing), Shield, Brush (archaeology), Shears, Flint and Steel, Fishing Rod, Spyglass, Wind Charge, Elytra (glider wings).
+
+
+* **Armor Sets:** Helmet, Chestplate, Leggings, Boots in Leather (dyeable), Chainmail, Iron, Golden, Diamond, Netherite, plus **Turtle Shell** (Water Breathing) and **Wolf Armor** (crafted from Armadillo Scutes). Customizable with **18 Armor Trims** + **10 Trim Materials**.
+* **Materials & Smelting Ingots:** Coal, Charcoal, Raw Iron/Copper/Gold, Iron Ingot, Copper Ingot, Gold Ingot, Netherite Scrap, Netherite Ingot, Diamond, Emerald, Lapis Lazuli, Redstone Dust, Quartz, Amethyst Shard, Flint, Clay Ball, Brick, Nether Brick, Stick, Bowl, String, Feather, Gunpowder, Leather, Rabbit Hide, Honeycomb, Phantom Membrane, Nautilus Shell, Heart of the Sea, Breeze Rod, Blaze Rod, Ghast Tear, Magma Cream, Ender Pearl, Eye of Ender, Nether Star, Echo Shard, Disc Fragment, Armadillo Scute, Turtle Scute, Shulker Shell, Paper, Book, Writable Book, Name Tag, Saddle, Lead, Totem of Undying.
+* **Food & Brewables:** Apple, Golden Apple, Enchanted Golden Apple, Bread, Cooked/Raw Porkchop, Beef, Chicken, Mutton, Rabbit, Cod, Salmon, Tropical Fish, Pufferfish, Baked Potato, Golden Carrot, Melon Slice, Sweet Berries, Glow Berries, Chorus Fruit, Dried Kelp, Cookie, Pumpkin Pie, Cake, Mushroom Stew, Rabbit Stew, Beetroot Soup, Suspicious Stew, Honey Bottle, Milk Bucket.
+* **Alchemy (Potions & Arrows):** Water Bottle $\rightarrow$ Awkward Potion + Reagent = Healing, Regeneration, Swiftness, Strength, Leaping, Fire Resistance, Water Breathing, Night Vision, Invisibility, Slow Falling, Turtle Master, Poison, Weakness, Harming, Slowness, Infestation, Oozing, Weaving, Wind Charging. Modifiable with Redstone (duration), Glowstone (potency), Gunpowder (Splash), Dragon's Breath (Lingering), and Fermented Spider Eye (corrupts effect).
+* **Miscellaneous Collectibles:** 19 Music Discs, 36 Banner Patterns, 20 Pottery Sherds, 16 Dyes, Spawn Eggs for every mob, Fireworks Rockets, Explorer Maps, Compass, Recovery Compass, Clock, Goat Horns (8 variants).
+
+---
+
+## 5. The Crafting, Smelting & Processing Systems
+
+### Grid Crafting ($2\times2$ Inventory & $3\times3$ Crafting Table)
+
+Recipes are either **Shaped** (exact spatial pattern) or **Shapeless** (ingredients anywhere in the grid):
+
+```text
+[Pickaxe]        [Sword]          [Furnace]        [Piston]
+M  M  M          _  M  _          C  C  C          P  P  P
+_  S  _          _  M  _          C  _  C          C  I  C
+_  S  _          _  S  _          C  C  C          C  R  C
+(M=Material, S=Stick, C=Cobblestone, P=Planks, I=Iron, R=Redstone)
+
+```
+
+* **Essential Foundational Recipes:**
+* `1 Log` $\rightarrow$ `4 Planks` | `2 Planks (vertical)` $\rightarrow$ `4 Sticks` | `4 Planks` $\rightarrow$ `1 Crafting Table`.
+* `8 Planks (ring)` $\rightarrow$ `1 Chest` | `8 Cobblestone (ring)` $\rightarrow$ `1 Furnace`.
+* `1 Coal + 1 Stick` $\rightarrow$ `4 Torches`.
+* `3 Planks + 3 Wool` $\rightarrow$ `1 Bed` | `3 Iron Ingots (V-shape)` $\rightarrow$ `1 Bucket`.
+* `4 Gold Ingots + 4 Netherite Scrap` $\rightarrow$ `1 Netherite Ingot`.
+* `7 Blaze Powder + 1 Ender Pearl` $\rightarrow$ `1 Eye of Ender`.
+* `3 Paper + 1 Leather` $\rightarrow$ `1 Book` | `6 Planks + 3 Books` $\rightarrow$ `1 Bookshelf`.
+
+
+
+### Secondary Crafting Stations
+
+* **Furnace / Blast Furnace / Smoker:** Converts raw inputs + fuel (Coal smelts 8 items, Lava Bucket smelts 100, Blaze Rod smelts 12) into ingots, cooked food, glass (from sand), smooth stone, and charcoal. Blast Furnaces smelt ores $2\times$ faster; Smokers cook food $2\times$ faster.
+* **Smithing Table:** Upgrades Diamond gear to Netherite using `Diamond Gear + Netherite Ingot + Netherite Upgrade Template`, or applies cosmetic Armor Trims.
+* **Stonecutter:** 1-to-1 precision conversion of stone/copper blocks into stairs, slabs, walls, and chiseled variants without material waste.
+* **Crafter (Automated):** Redstone-powered $3\times3$ crafting table with toggleable slots that ejects crafted items upon receiving a Redstone pulse.
+
+---
+
+## 6. Mobs, Animals & Tameable Pets
+
+Every entity runs on a goal-based AI priority tree (Target Selection, Pathfinding, Temptation, Fleeing, Breeding).
+
+### Complete Tameable Pets & Companions
+
+| Companion | Taming Item | Behavior, Abilities & Equipment |
+| --- | --- | --- |
+| **Wolf** | Bones | Follows owner, teleports when $>12$ blocks away, attacks mobs you hit or that hit you. **9 Biome Variants** (Pale, Woods, Ashen, Black, Chestnut, Rusty, Spotted, Striped, Snowy). Can wear **dyeable Wolf Armor** (absorbs all damage until broken) and dyed collars. |
+| **Cat** | Raw Cod / Raw Salmon | **11 Variants** (Tuxedo, Tabby, Siamese, Calico, Persian, Ragdoll, British Shorthair, White, Red, Black, Jellie). Scares away **Creepers and Phantoms**; sleeps on your bed and gifts items (String, Feather, Phantom Membrane) when you wake up; immune to fall damage. |
+| **Parrot** | Wheat / Melon / Pumpkin / Beetroot Seeds | **5 Colors**. Sits on player's shoulders (up to 2 at once); imitates ambient sounds of nearby hostile mobs as an early-warning radar; dances to Jukebox music. *(Fatal if fed Cookies).* |
+| **Horse / Donkey / Mule** | Empty Hand (repeated mounting) | Rideable mounts with randomized **Speed, Jump Strength, and Health** stats. Horses wear Saddles + Horse Armor; Donkeys/Mules wear Saddles + **Chests (15 inventory slots)**. Breeding Horse + Donkey = sterile Mule. |
+| **Llama / Trader Llama** | Empty Hand (mounting) | Equippable with 16 colored Carpets (unique patterned textures) and Chests ($3\text{ to }15$ slots). Leading one Llama causes up to **9 nearby Llamas** to form an automatic caravan line; spits at wolves and attackers. |
+| **Camel** | Cactus (breeding/healing; naturally passive) | Seats **2 players simultaneously**; tall enough that standard Zombies cannot reach riders; features a horizontal **Dash** ability instead of jumping. |
+| **Axolotl** | Bucket of Tropical Fish (bucketed transport) | **5 Colors** (including $1/1,200$ rare Blue). Assists player in underwater combat against Guardians and Drowned; grants **Regeneration I** and removes Mining Fatigue when assisting in a kill. |
+| **Allay** | Give any item (music-linked) | Non-combat flying collector. Follows the player and gathers matching dropped items within 32 blocks, depositing them to the player or a chiming **Note Block**. Duplicates via Amethyst Shard while dancing to a Jukebox. |
+| **Fox** | Sweet Berries / Glow Berries (breed 2 adults; baby trusts you) | Red and Arctic White variants. Defends trusted players against hostile mobs; carries items in its mouth (can use enchanted swords or Totems of Undying); immune to Sweet Berry Bush damage. |
+| **Strider** | Warped Fungus on a Stick (saddle-steered) | Passive Nether lava-walker; turns purple and shivers outside lava; sprints across lava lakes when steered with Warped Fungus on a Stick. |
+| **Happy Ghast** | Water hydration (Dried Ghast $\rightarrow$ Ghastling $\rightarrow$ Happy Ghast) | Friendly flying Nether mount equipped with a **Harness**, carrying up to **4 players** across the sky. |
+
+### Non-Tameable World Ecosystem
+
+* **Passive Livestock & Wildlife:** Cow, Mooshroom (Red/Brown), Sheep (16 wool colors), Pig (saddle + Carrot on a Stick), Chicken, Rabbit, Squid, Glow Squid, Cod, Salmon, Pufferfish, Tropical Fish (2,700+ visual combinations), Turtle (returns to home beach to lay eggs), Frog (Temperate/Warm/Cold—eats small Slimes/Magma Cubes to produce **Froglights**), Tadpole, Sniffer (hatches from eggs, sniffs up ancient Torchflower & Pitcher Pods), Armadillo (curls into shell, sheds Scutes), Bat, Ocelot (trusts player, scares Creepers).
+* **Neutral Mobs:** Villager (13 professions + trading economy), Wandering Trader, Iron Golem (player-buildable village defender), Snow Golem (player-buildable), Bee (pollinates crops, produces honey), Dolphin (grants Dolphin's Grace speed boost, leads to shipwrecks), Panda (7 personalities), Polar Bear, Goat (drops Goat Horns), Piglin (barters Gold Ingots), Zombified Piglin, Enderman, Spider, Cave Spider.
+* **Hostile Mobs & Bosses:**
+* *Overworld:* Zombie, Husk, Drowned, Skeleton, Stray, Bogged, Creeper, Witch, Slime, Phantom, Silverfish, Breeze (Trial Chambers), Creaking (Pale Garden—moves only when unobserved, tied to Creaking Heart block), Warden (Deep Dark—blind, hunts via vibration/smell, 500 HP).
+* *Nether:* Blaze, Ghast, Magma Cube, Piglin Brute, Wither Skeleton, Hoglin, Zoglin.
+* *End & Bosses:* Shulker, Endermite, **Ender Dragon** (200 HP, healed by End Crystals), **The Wither** (300 HP, player-summoned from 4 Soul Sand + 3 Wither Skeleton Skulls, drops Nether Star).
+
+
+
+---
+
+## 7. Redstone Engineering & Enchantment Rules
+
+* **Redstone Signal Logic:** Power ranges from `0` to `15`. Dust loses 1 signal strength per block; **Repeaters** restore signal to `15` and add $1\text{ to }4\text{ ticks}$ ($0.1\text{ to }0.4\text{ s}$) of delay; **Comparators** compare, subtract, or measure container fullness; **Redstone Torches** invert signals (`NOT` gate), enabling full Turing-complete binary logic (`AND`, `OR`, `XOR`, memory latches, piston doors, and automated farms).
+* **Enchanting & Experience:** Killing mobs, mining non-smelted ores, smelting, and breeding drop **XP Orbs**. An Enchanting Table surrounded by **15 Bookshelves** (1 block away with air in between) unlocks Level 30 enchantments using **Lapis Lazuli** + XP levels, rolling modifiers like *Mending*, *Unbreaking*, *Efficiency*, *Fortune*, *Silk Touch*, *Sharpness*, *Protection*, *Infinity*, and *Frost Walker*.
+
+
+
+
+
+
+
+### Generated Structures & Progression Loops
+
+* **Overworld Structures:** Villages (with iron golems, bells, and job workstations), Pillager Outposts (with caged Allays/Iron Golems), Woodland Mansions (Evokers dropping Totems of Undying), Ocean Monuments (Elder Guardians inflecting Mining Fatigue III), Ancient Cities (Sculk sensors/shriekers guarding Warden territory), Trial Chambers (copper/tuff dungeons with Trial Spawners and Vaults), Strongholds (End Portal frames requiring 12 Eyes of Ender), Desert/Jungle Temples, Mineshafts, Ruined Portals, Shipwrecks, Trail Ruins (suspicious sand/gravel for archaeology).
+* **Nether & End Structures:** Nether Fortresses (Blaze Spawners + Wither Skeletons), Bastion Remnants (Piglin Brutes + Netherite Upgrade Smithing Templates), End Cities & End Ships (Shulkers + Elytra).
+
+### Status Effects (34 Buffs & Debuffs)
+
+* **Positive:** Speed, Haste, Strength, Instant Health, Jump Boost, Regeneration, Resistance, Fire Resistance, Water Breathing, Invisibility, Night Vision, Health Boost, Absorption, Saturation, Glowing, Luck, Slow Falling, Conduit Power, Dolphin's Grace, Hero of the Village.
+* **Negative:** Slowness, Mining Fatigue, Instant Damage, Nausea, Blindness, Hunger, Weakness, Poison, Wither (turns hearts black; lethal unlike Poison), Levitation, Unluck, Bad Omen (triggers Village Raids or Trial Omen), Darkness (pulsing vignette from Warden/Shrieker), Infested, Oozing, Weaving, Wind Charged.
+
+### Weather & Environmental Rules
+
+* **States:** Clear, Rain (snow in cold biomes/high altitudes; extinguishes fires, hydrates farmland, boosts Riptide Tridents), and Thunderstorm (darkens sky to light level 10 even at noon, spawns hostile mobs during daytime, strikes lightning that turns Pigs $\rightarrow$ Zombified Piglins, Villagers $\rightarrow$ Witches, Creepers $\rightarrow$ Charged Creepers, and de-oxidizes Copper).
+
+### Villager Trading & Economy Logic
+
+* 13 Professions (Armorer, Butcher, Cartographer, Cleric, Farmer, Fisherman, Fletcher, Leatherworker, Librarian, Mason, Shepherd, Toolsmith, Weaponsmith) + Nitwit.
+* Villagers restock twice per day at their linked workstation; supply-and-demand dynamically raises prices if an item is over-bought, while curing a Zombie Villager grants permanent massive discounts.
+
+---
+
+## 2. Exact Engine Logic & Mathematical Physics
+
+### A. Tick Loop & Chunk Simulation
+
+* **Game Tick ($50\text{ ms}$ / $20\text{ Hz}$):** Every tick executes in strict order:
+1. World time & weather update.
+2. Scheduled block ticks (Redstone repeaters, water/lava flow updates).
+3. **Random Block Ticks:** Inside loaded chunks (within 128 blocks of player), 3 random blocks per $16\times 16\times 16$ sub-chunk are ticked every game tick—governing crop growth, leaf decay, grass spreading, copper oxidation, and ice melting.
+4. Entity AI, physics integration, and collision resolution.
+
+
+
+### B. Fluid & Buoyancy Physics
+
+* **Water Drag & Gravity:** Inside water, entity gravity drops to $-0.02\text{ blocks/tick}^2$ with $0.8$ horizontal and $0.8$ vertical drag. Holding Jump applies $+0.04\text{ blocks/tick}$ upward buoyancy.
+* **Flow Vector Calculation:** Each flowing water block checks Manhattan distance (up to 4 blocks) to the nearest drop-off; entities inside are pushed along the resulting normalized gradient vector at $0.014\text{ blocks/tick}$.
+* **Bubble Columns:** Soul Sand underwater generates upward water particles propelling entities upward at $+0.7\text{ blocks/tick}$ while refilling oxygen; Magma Blocks generate downward whirlpools pulling entities down at $-0.3\text{ blocks/tick}$ and dealing $1\text{ HP}$ damage per half-second unless sneaking.
+
+### C. Mining & Damage Formulas
+
+* **Block Breaking Time:**
+
+$$\text{Ticks to Break} = \lceil \frac{\text{Hardness} \times 1.5}{\text{Tool Speed Multiplier}} \times 20 \rceil$$
+
+
+
+*(If wrong tool or unharvestable tier, multiplier drops to $1.0$ and penalty factor changes from $1.5$ to $5.0$, yielding no drop).*
+* Tool Multipliers: Hand = `1`, Wood = `2`, Stone = `4`, Iron = `6`, Diamond = `8`, Netherite = `9`, Gold = `12`.
+
+
+* **Armor Damage Reduction:**
+
+$$\text{Damage Taken} = \text{Raw Damage} \times \left(1 - \frac{\min(20, \max(\frac{\text{Defense}}{5}, \text{Defense} - \frac{4 \times \text{Raw Damage}}{\text{Toughness} + 8}))}{25}\right)$$
+
+
+
+---
+
+## 3. Master Visual, Texture & Strength Specification
+
+Every asset uses a **$16 \times 16$ pixel-art texture grid** mapped onto crisp block faces (nearest-neighbor filtering, zero blur).
+
+### A. Biomes & World Visual Prompts
+
+| Biome / Dimension | Visual Look, Palette & Environmental Details |
+| --- | --- |
+| **Plains & Meadows** | Rolling emerald-green grass hills (`#7CBD6B`), scattered oak/birch trees, golden dandelions, crimson poppies, tall waving grass blades, tranquil blue rivers, and wildflower carpets in meadows. |
+| **Dark Forest & Pale Garden** | **Dark Forest:** Dense canopy of thick-trunked dark oak trees blocking sunlight, dotted with giant red/brown spotted mushrooms. **Pale Garden:** Desaturated ash-gray moss, pale gray oak wood, hanging pale moss curtains, and eerie silence with zero passive wildlife. |
+| **Desert & Badlands** | **Desert:** Endless dunes of pale cream-yellow sand (`#DBD3A0`), dry scrub bushes, ribbed green cacti, and sandstone temples. **Badlands:** Towering stratified mesas of red sand and banded terracotta stripes (orange, red, yellow, white, brown). |
+| **Jungle & Bamboo Jungle** | Towering 30-block mahogany-bark jungle trees draped in emerald vines, dense undergrowth bushes, bright orange cocoa pods, and dense green stalks of segmented bamboo. |
+| **Deep Dark & Lush Caves** | **Deep Dark:** Pitch-black underground caverns coated in midnight-blue/teal bioluminescent **Sculk** veins (`#052A32` with cyan speckles `#009295`). **Lush Caves:** Vibrant moss ceilings, glowing pink spore blossoms, hanging vine curtains with warm orange glow berries, and shallow clay pools. |
+| **The Nether** | A claustrophobic subterranean hellscape lit by a crimson fog, oceans of bright orange glowing lava, craggy maroon netherrack, forests of giant crimson and turquoise warped fungi, bone-strewn ash valleys, and jagged black basalt pillars. |
+| **The End** | Pitch-black starless void with pale cream porous **End Stone** islands (`#D8D89E`), towering obsidian pillars capped with spinning crystal cages, and branching purple-magenta Chorus trees. |
+
+---
+
+### B. Blocks: Visual Look, Texture & Strength Table
+
+*(Note: Hardness = mining resistance; Blast = explosion resistance).*
+
+| Block | Exact Visual & Texture Specification | Hardness | Blast |
+| --- | --- | --- | --- |
+| **Grass Block** | Top: noisy vibrant green pixel turf (`16x16`); Sides: rich brown soil with irregular green grass overhang fringe; Bottom: earthy brown dirt. | `0.6` | `0.6` |
+| **Stone & Cobblestone** | **Stone:** Smooth mottled medium-gray (`#7D7D7D`) horizontal sedimentary grain. **Cobblestone:** High-contrast rounded gray stone pebbles separated by dark mortar cracks. | `1.5` / `2.0` | `6.0` |
+| **Deepslate** | Dark charcoal-slate (`#38383D`) layered horizontal striations with deep shadowy crevices; emits heavy bass-pitched stone footsteps. | `3.0` | `6.0` |
+| **Obsidian** | Deep pitch-purple/black (`#14121D`) glossy volcanic glass speckled with dark indigo and violet crystalline shards. | `50.0` | `1,200` |
+| **Bedrock** | Chaotic high-contrast jagged noise of jet-black and light-gray pixels; completely indestructible. | `-1` (∞) | `3.6M` |
+| **Wood Logs & Planks** | **Logs:** Vertical bark grooves on sides (brown oak, white-with-black-dashes birch, pink-tinted cherry), concentric growth rings on top/bottom. **Planks:** Horizontal wood boards with dark nail/seam lines. | `2.0` | `3.0` |
+| **Ores (Coal to Diamond)** | Base stone/deepslate block embedded with diagonal pixel clusters: matte black (Coal), peach-tan (Iron), orange-green (Copper), bright yellow (Gold), glowing crimson (Redstone), royal blue (Lapis), vivid green (Emerald), cyan-blue crystals (Diamond). | `3.0` (`4.5` Deep) | `3.0` |
+| **Copper Block** | Metallic burnt-orange plate with bolted border rivets; gradually shifts through speckled turquoise-green patches to full verdigris patina (`#52A384`). | `3.0` | `6.0` |
+| **Glass & Stained Glass** | Crisp 1-pixel border frame with diagonal white shine streaks across a transparent center. | `0.3` | `0.3` |
+| **Glowstone & Sea Lantern** | **Glowstone:** Warm amber-gold rocky cluster with bright yellow luminous cracks. **Sea Lantern:** Pale cyan-white crystalline tile with a pulsing aquamarine core. | `0.3` | `0.3` |
+| **TNT** | Bright red vertical dynamite sticks wrapped in a white paper band reading `"TNT"` in bold black pixel letters, topped with gray fuse ends. | `0.0` | `0.0` |
+
+---
+
+### C. Characters, Friendly Mobs & Tameable Pets
+
+| Character / Mob | Exact Visual Appearance, Proportions & Texture | Health |
+| --- | --- | --- |
+| **Player (Steve / Alex)** | Boxy articulated humanoid ($1.8\text{m}$ tall): $8\times 8\times 8$ pixel head, $8\times 12\times 4$ torso, $4\times 12\times 4$ arms/legs. Steve wears a cyan shirt and indigo jeans; Alex wears a green tunic and brown pants. | `20 HP` |
+| **Villager** | Tall rectangular head with a prominent overhanging unibrow, green eyes, large protruding nose, and arms folded across biome-specific robes (brown plains, desert turban, snowy parka) + profession badges. | `20 HP` |
+| **Iron Golem** | Massive $2.7\text{m}$ hulking white-iron construct covered in trailing green moss vines, broad shoulders, long swinging arms, and glowing red eyes. Launches attackers into the air. | `100 HP` |
+| **Wolf (Tamed)** | Quadruped canine with pointed ears, snout, bushy tail, and biome-specific fur (light gray, snowy white, black, chestnut, rusty, spotted). Gains a dyed collar and bright eyes when tamed. | `40 HP` (tamed) |
+| **Cat (Tamed)** | Sleek low-profile feline with twitching ears, long articulated tail, and 11 coat patterns (tuxedo, orange tabby, white, Siamese, calico). Purrs and curls up on beds. | `10 HP` |
+| **Axolotl** | Cute amphibious salamander with feathery external gill fronds framing its head, stubby legs, finned tail, and pastel pink, gold, cyan, brown, or rare royal-blue skin. | `14 HP` |
+| **Allay** | Tiny translucent sky-blue fairy spirit with glowing cyan skin, petite fluttering wings, and a gentle hovering bob. | `20 HP` |
+| **Horse / Camel** | **Horse:** Blocky equine with flowing mane, long tail, and spotted/solid coats. **Camel:** Towering tan desert mount with a boxy hump, drooping ears, and slow blinking eyes. | `15–30 HP` / `32 HP` |
+| **Sniffer** | Colossal prehistoric six-legged moss-backed creature with a floppy maroon-red head, huge yellow beak, and floppy ears. | `14 HP` |
+
+---
+
+### D. Hostile Monsters & Bosses (Visuals, Texture & Combat Strength)
+
+| Monster / Boss | Exact Visual Appearance & Texture | Health | Attack Strength (Normal) |
+| --- | --- | --- | --- |
+| **Zombie** | Undead player silhouette with mottled olive-green decaying skin, hollow dark eye sockets, outstretched arms, and tattered cyan shirt/purple pants. Burns in sunlight. | `20 HP` | `3 HP` |
+| **Skeleton** | Bleached white ribcage, skull, and thin rod-like limb bones holding a wooden bow; rattles when walking and strafes at range. | `20 HP` | `2–5 HP` (arrow) |
+| **Creeper** | Arched four-legged armless green creature covered in speckled leafy camouflage pixels (`#0DA70B` to `#50D94E`) with a permanent downturned frowning mouth. Silently stalks, hisses, flashes white, and detonates. | `20 HP` | Up to `43 HP` (point-blank explosion) |
+| **Spider** | Wide flat black/dark-brown arachnid ($1.4\text{m}$ wide, $0.9\text{m}$ tall) with eight jointed legs and eight glowing crimson eyes; climbs vertical walls. | `16 HP` | `2 HP` |
+| **Enderman** | $2.9\text{m}$ tall pitch-black slender humanoid with extra-long limbs, glowing violet eyes, and swirling purple teleportation particles. Turns hostile when looked at in the eyes. | `40 HP` | `7 HP` |
+| **Witch** | Villager-like figure with pale warty skin, a crooked purple robe, and a tall pointed black witch hat with a green buckle; throws splash potions of Harming/Poison and drinks Healing potions. | `26 HP` | `6 HP` (magic potions) |
+| **Blaze** | Floating golden-yellow smoky head surrounded by three rotating rings of spinning yellow-orange fire rods; shoots bursts of 3 fireballs. | `20 HP` | `6 HP` (melee) / `5 HP` (fire) |
+| **Ghast** | Giant $4\times 4\times 4\text{m}$ floating white cube jellyfish with tear-streaked closed eyes, red mouth, and 9 dangling tentacles; fires explosive fireballs. | `10 HP` | `17 HP` (fireball blast) |
+| **Breeze** | Floating swirling cyclone monster with a glowing pale-purple brow and spinning wind-vortex torso; leaps rapidly and fires explosive Wind Charges. | `30 HP` | `1 HP` + heavy knockback |
+| **Creaking** | Tall gnarled bark-wood humanoid tree spirit with three glowing orange eyes embedded asymmetrically in its head/chest; freezes completely when inside a player's camera view. | Invulnerable (tied to Creaking Heart) | `3 HP` |
+| **Warden** | Towering $2.9\text{m}$ muscular blind horror of dark teal sculk and bone, with deer-like sensory antlers and an exposed glowing cyan ribcage showing a beating soul heart. | `500 HP` | `30 HP` (melee) / `10 HP` (armor-piercing sonic boom) |
+| **The Wither (Boss)** | Floating three-headed skeletal black-ash apparition with glowing white eyes and a ribbed spine; fires explosive black and blue Wither Skulls. | `300 HP` | `8 HP` + Wither II drain |
+| **Ender Dragon (Boss)** | Massive jet-black winged dragon with glowing purple eyes, articulated neck/tail, and purple breath attacks; perches on the central bedrock fountain. | `200 HP` | `10 HP` (melee) / `6 HP/s` (breath) |
+
+---
+
+### E. Craftable Tools, Weapons & Devices (Visuals, Texture & Strength)
+
+| Craftable Item | Visual Appearance & Pixel Texture | Durability & Strength |
+| --- | --- | --- |
+| **Swords (Wood $\rightarrow$ Netherite)** | Diagonal pixel blade with a crossguard and brown wooden hilt: tan wood, gray cobblestone, bright white-silver iron, gleaming yellow gold, glowing cyan diamond, and dark charcoal-violet netherite. | **Durability:** Wood `59`, Stone `131`, Iron `250`, Gold `32`, Diamond `1,561`, Netherite `2,031`.<br>
+
+<br>**Damage:** `4` / `5` / `6` / `4` / `7` / `8 HP`. |
+| **Pickaxe, Axe, Shovel, Hoe** | Curved dual-headed mining pick, broad chopping wedge blade, rounded digging scoop, or angled farming hook mounted on a diagonal wooden handle in matching tier colors. | **Axe Damage:** `7`–`10 HP` (slower swing).<br>
+
+<br>**Mining Speed:** Netherite breaks stone in `0.25s`. |
+| **Mace** | Heavy cubic dark-iron/breeze-rod warhammer head with blue wind-etched bands on a pale handle; unleashes a shockwave smash when striking mid-fall. | **Durability:** `500`<br>
+
+<br>**Damage:** `6 HP` base + **`4 HP` per block fallen** (unlimited scaling). |
+| **Bow & Crossbow** | **Bow:** Curved wooden arc with taut gray string that bends back as charged. **Crossbow:** Heavy horizontal wooden stock with iron limbs and mechanical latch. | **Bow:** Up to `10 HP` (Power V: `25 HP`).<br>
+
+<br>**Crossbow:** `6–11 HP` (or AoE Firework Rockets). |
+| **Shield** | Tall rectangular oak-plank board bound in a riveted dark-iron rim; blocks $100\%$ of frontal melee/arrow damage and reflects projectiles. | **Durability:** `336` (disabled for 5s if struck by an Axe). |
+| **Elytra** | Pair of slate-gray translucent beetle-like glider wings worn in the chestplate slot; folds flat when standing and spreads wide mid-air. | **Durability:** `432` ($1\text{ point/sec}$ gliding). |
+| **Crafting Table & Furnace** | **Crafting Table:** Oak block topped with a $3\times 3$ grid and hanging saw/pliers pixels on the sides. **Furnace:** Cobblestone block with a dark arched firebox that glows bright orange when active. | Hardness `2.5` / `3.5`. |
+| **Enchanting Table** | Short obsidian pedestal draped in a crimson-and-gold embroidered cloth with a floating, auto-rotating leather book that opens when a player approaches. | Hardness `5.0`, Blast `1,200`. |
+| **Beacon** | Glass cube encasing a glowing turquoise Nether Star above an obsidian base; projects a vertical beam of white/colored light into the sky when placed atop an iron/gold/emerald/diamond/netherite pyramid. | Grants Speed, Haste, Resistance, Jump Boost, Strength, or Regeneration within $50\text{ blocks}$. |
+
+
+
+
+---
+
+## 1. Block Science: Fluid Flow, Saplings, Bone Meal & Eggs
+
+### A. Single Water Block vs. Single Lava Block Flow Physics
+
+Both fluids operate as **cellular automata** with **8 fluid levels** (`Level 8` = Source block, `Level 7` down to `Level 1` = flowing slope, `Level 0` = empty).
+
+| Property | Single Water Block | Single Lava Block |
+| --- | --- | --- |
+| **Horizontal Spread** | Spreads **7 blocks** outward (`8` $\rightarrow$ `7, 6, 5, 4, 3, 2, 1`). | Spreads **3 blocks** in Overworld (`8` $\rightarrow$ `6, 4, 2`); **7 blocks** in the Nether. |
+| **Flow Tick Rate** | Updates every **5 game ticks** ($0.25\text{ seconds}$). | Updates every **30 game ticks** ($1.5\text{ seconds}$) in Overworld; **10 ticks** ($0.5\text{ s}$) in Nether. |
+| **Drop-Off Pathfinding** | Before spreading flat, water scans up to **4 blocks away** for a 1-block drop-off. If a hole exists within 4 blocks, water flows *exclusively* toward that drop-off instead of spreading outward. | Scans **4 blocks** in the Nether, **2 blocks** in the Overworld for the nearest drop-off. |
+| **Vertical Fall Reset** | Any water falling straight down becomes a **Falling Water** block (`Level 8` equivalent) and resets its horizontal spread to a fresh **7 blocks** upon hitting a floor. | Falling lava resets its horizontal spread to a fresh **3 blocks** (Overworld) or **7 blocks** (Nether) upon hitting a floor. |
+| **Infinite Source Rule** | If an empty/flowing block has **2 or more adjacent Water Source blocks** horizontally AND a solid block (or another source block) underneath, it converts into a permanent **Source Block**. | **Never forms infinite sources.** Removing a single lava source dries up the entire stream from the top down. |
+| **Waterlogging** | Non-full blocks (Slabs, Stairs, Fences, Walls, Signs, Trapdoors, Leaves, Sea Pickles, Kelp, Chains) can hold a Water Source block *inside* their same $1\times 1\times 1$ voxel space without breaking. | **Cannot be lavalogged.** Lava breaks fragile blocks (torches, flowers, redstone, rails) on contact. |
+
+### B. Sapling Growth, Tree Generation & Bone Meal Science
+
+* **Sapling Block Mechanics:** Placed on Dirt, Grass, Podzol, Coarse Dirt, Mud, or Moss. Requires **Light Level $\ge 9$** and unobstructed vertical clearance above (`5–7` blocks for Oak/Birch, `14+` blocks for Spruce/Jungle, `4$\times$4` wide space for Dark Oak/Mega Spruce/Mega Jungle).
+* **Two-Stage Growth:** Each sapling stores a hidden `stage` bit (`0` or `1`). Random block ticks first flip `stage: 0` $\rightarrow$ `stage: 1` (invisible change), and the second successful tick replaces the sapling with a procedurally generated **Log Trunk + Leaf Canopy**.
+* **Bone Meal Fertilizer Rules:** Applying Bone Meal triggers a $45\%$ chance per use to advance a sapling's stage. On crops (Wheat, Carrots, Potatoes, Beetroots), it advances `2–5` growth stages instantly. On Grass Blocks, it generates wildflowers, tall grass, and ferns in a $7\times 7$ radius; on Nylium, it generates Crimson/Warped roots and fungi; underwater on sand/stone, it generates Seagrass and Coral.
+* **Leaf Decay Physics:** Every leaf block tracks its Manhattan distance (`1` to `7`) from the nearest Log block. If a tree's logs are chopped down, leaves at distance `7` lose their connection and randomly decay on block ticks, dropping **Saplings, Sticks, and Apples** (Oak/Dark Oak).
+
+### C. Animal & Pet Eggs (Hatching & Incubation)
+
+* **Chicken Egg:** Thrown projectile (`12.5%` chance to spawn 1 baby chick; `1/256` chance to spawn 4 chicks at once). **Warm/Cold Chicken variants** lay brown or blue-tinted eggs matching their biome.
+* **Turtle Egg:** Placed on Sand/Red Sand (up to 4 eggs per block). Cracks through **3 visual stages** (`0` $\rightarrow$ `1` $\rightarrow$ `2` $\rightarrow$ Hatch) *only at night* (fastest between midnight and dawn). Zombies and Skeletons actively seek out and stomp on Turtle Eggs to crush them.
+* **Sniffer Egg:** Placed on any block; hatches in **20 minutes**, or **10 minutes** if placed directly on a **Moss Block** (shows green crack lines before hatching a Snifflet).
+* **Frogspawn:** Laid on water surface after breeding Frogs; hatches into **Tadpoles** after ~10 minutes.
+* **Dragon Egg:** Gravity-affected trophy block that teleports $15\text{ blocks}$ horizontally and $7\text{ blocks}$ vertically in a burst of purple particles whenever punched or clicked.
+
+---
+
+## 2. House Decoration & Garden Blocks (Missed in Part 1)
+
+* **House Interior & Furniture:** Paintings (30+ pixel-art canvases from $1\times 1$ to $4\times 4$ blocks), Item Frames & Glow Item Frames (rotate held items in 8 angles), Armor Stands (poseable wooden mannequins), Flower Pots (hold saplings, flowers, cacti, mushrooms, azalea), Banners (layerable up to 6 patterns on a Loom), Candles (1–4 per block, lit with Flint & Steel), Chiseled Bookshelves (hold up to 6 actual books, emit Comparator signal), Decorated Pots (crafted from 4 Bricks/Pottery Sherds, store 1 stack of items), Carpets, Glass Panes, Iron Bars, Chains, Lanterns, Campfires, Bell, Jukebox, Note Block, Beds, End Rods (fluorescent tube lights).
+* **Garden, Landscaping & Outdoor Blocks:**
+* *Flowers:* Dandelion, Poppy, Blue Orchid, Allium, Azure Bluet, Red/Orange/White/Pink Tulips, Oxeye Daisy, Cornflower, Lily of the Valley, Wither Rose (inflicts Wither damage on touch), Torchflower, Pitcher Plant, Eyeblossom (opens and glows orange at night in Pale Gardens, closes during day).
+* *Tall Plants & Bushes:* Sunflower (always faces East), Lilac, Rose Bush, Peony, Pink Petals (1–4 cherry blossom petals on ground), Leaf Litter (dry fallen leaves), Firefly Bush (emits glowing yellow firefly particles at night), Bush, Short/Tall Grass, Fern, Large Fern, Dead Bush, Azalea & Flowering Azalea Bushes, Moss Carpet, Hanging Roots, Cave Vines, Glow Lichen, Dripleaves, Lily Pads.
+* *Masonry & Paths:* Cobblestone/Stone Brick/Andesite/Granite/Diorite/Deepslate/Blackstone/Tuff/Mud Brick/Sandstone **Walls** (connect automatically with posts), Fences & Fence Gates, Dirt Path (shoveled grass, $15/16$ block tall), Farmland (tilled soil, darkens when hydrated within 4 blocks of water), Hay Bales, Composter, Beehive & Bee Nest (5 honey fill levels).
+
+
+
+---
+
+## 3. All 9 Default Player Avatars (Visual & Texture Specs)
+
+Every player avatar shares the **exact same $1.8\text{m}$ tall voxel skeleton** (with either **Classic $4\text{px}$-wide arms** or **Slim $3\text{px}$-wide arms**), a 2-layer texture skin (base body + outer hat/jacket/sleeve overlay), and 9 distinct official character designs:
+
+1. **Steve (Classic):** Warm tan skin, dark brown hair, beard/goatee, violet-blue eyes, untucked cyan T-shirt, indigo jeans, and gray shoes.
+2. **Alex (Slim):** Fair peach skin, bright orange hair tied in a side ponytail over the left shoulder, dark green eyes, light-green belted tunic, brown trousers, and gray boots.
+3. **Noor (Slim):** Deep brown skin, long dark locs/dreadlocks tied back, dark eyes, crimson-red sleeveless vest over a white undershirt, dark gray pants, and red-accented boots.
+4. **Sunny (Classic):** Light olive skin, bowl-cut black hair, prosthetic left arm (silver-gray mechanical forearm/hand), yellow button-up shirt, blue overalls, and brown boots.
+5. **Ari (Classic):** Medium-warm tan skin, braided light-brown hair, orange-amber tunic with a woven belt, dark brown leggings, and rugged leather boots.
+6. **Zuri (Classic):** Rich dark brown skin, short black buzz-cut hair with a crisp hairline, red polo-style shirt, tan cargo pants, and white-soled sneakers.
+7. **Makena (Slim):** Warm dark-brown skin, curly afro-textured black hair, bright yellow sweater with teal geometric trim, maroon/plum pants, and yellow sneakers.
+8. **Kai (Classic):** Light-tan skin, sweeping shoulder-length platinum-blonde hair, teal-and-gold martial arts tunic with dark sash, and dark gray pants.
+9. **Efe (Slim):** Deep ebony skin, purple-tinted cropped hair, gold earrings, magenta/purple layered tunic with gold trim, dark trousers, and purple boots.
+
+---
+
+## 4. Complete Mob & Monster Roster: Appearance & Locomotion (Walk, Fly, Swim)
+
+Here is every remaining mob and monster (excluding those already detailed in Part 2), detailing **how they look** and **how their movement physics work**:
+
+### A. Utility Golems & Passive Wildlife
+
+| Mob | Exact Visual Appearance & Texture | Locomotion & Movement Behavior |
+| --- | --- | --- |
+| **Snow Golem** | Three stacked cubes: two snowballs for body/torso, stick-like twig arms, and a carved jack-o'-lantern pumpkin head (can be sheared off to reveal a smiling snowman face). | **Walks/Glides:** Slides smoothly across blocks leaving a trail of **Snow Layers** beneath it; throws rapid-fire snowballs at hostile mobs; melts in hot biomes/water. |
+| **Parrot** | Small colorful tropical bird ($0.9\text{m}$) with a curved yellow-black beak, head crest feathers, and 5 vibrant plumage colors (Scarlet Red, Blue, Green, Cyan, Gray). | **Flies & Perches:** Flaps wings rapidly to fly in erratic fluttering arcs; lands on trees or perches on the player's shoulders; bobs its head and twists its torso to Jukebox music. |
+| **Turtle** | Low wide green reptile ($1.2\text{m}$ wide) with a patterned olive-green domed shell, tan-yellow belly plate, and four flat paddle flippers. | **Swims Fast / Crawls Slowly:** Extremely slow, clumsy flipper-crawl on land ($0.1\text{ m/s}$), but glides gracefully and swiftly through water like a sea turtle. |
+| **Dolphin** | Sleek silver-blue aquatic mammal with a tapered snout, dorsal fin, side flippers, and horizontal tail fluke. | **Swims & Leaps:** Swims at high speed in pods, leaps high out of the water in parabolic arcs, plays with dropped floating items, and suffocates if stranded on land without water/rain. |
+| **Frog & Tadpole** | **Frog:** Squat amphibian with bulging eyes on top of its head, wide mouth, and 3 biome colors (Orange Temperate, White Warm, Green Cold). **Tadpole:** Tiny brown swimming head with a wiggling tail. | **Hops & Swims:** Frogs leap in high parabolic hops on land, paddle smoothly in water, and flick out a long pink tongue to swallow small Slimes/Magma Cubes whole. |
+| **Armadillo** | Compact pinkish-brown armored mammal with segmented shell plates, small snout, and tiny feet. | **Walks & Rolls:** Trots slowly on short legs; when startled by sprinting players or undead mobs, curls completely into a **hard cubic shell block** (`0` speed, high armor). |
+| **Bee** | Chubby fuzzy yellow-and-black striped insect ($0.7\text{m}$) with translucent white wings, two antennae, and blue eyes (eyes turn bright red when angered). | **Flies:** Hovers and bobs gently from flower to flower, tilting forward as it flies; collects pollen specks on its back and flies home to its hive. |
+| **Panda** | Plump black-and-white bear with round ears, black eye patches, and 7 distinct facial expressions (Lazy, Worried, Playful, Aggressive, Weak, Brown variant, Normal). | **Walks, Sits & Rolls:** Waddles on four legs, sits upright to munch bamboo held in its paws, and playful pandas perform forward somersault rolls. |
+| **Goat** | Rectangular cream-white mountain animal with curved brown horns, goatee beard, and horizontal rectangular pupils. | **Walks & High-Jumps:** Scales steep cliffs, leaps up to **10 blocks high** in a single bound, and lowers its head to charge and ram entities off cliffs. |
+| **Fox** | Sleek orange-red (or snowy white) canine with pointed black-tipped ears, white cheek fur, white tail tip, and sleepy narrow eyes. | **Trots, Pounces & Sleeps:** Trots swiftly, curls into a sleeping ball under trees during daytime, and leaps high into the air to dive headfirst onto chickens/rabbits. |
+| **Ocelot** | Slender spotted golden-yellow jungle wildcat with green eyes and a long striped tail. | **Stalks & Sprints:** Creeps low to the ground when sneaking up on prey, then bursts into a fast sprint; immune to fall damage. |
+| **Cow, Pig, Sheep, Chicken, Rabbit** | **Cow:** Brown-and-white spotted bovine with horns. **Pig:** Pink snouted hog. **Sheep:** Woolly coat (16 colors) over tan skin (sheared to thin white undercoat). **Chicken:** White feathers, red wattle, yellow beak. **Rabbit:** Long ears, cotton tail (6 fur colors + red-eyed Killer Bunny). | **Walks / Hops / Flaps:** Cows/Pigs/Sheep walk steadily on four legs; Chickens flap their wings to glide down slowly with zero fall damage; Rabbits bound continuously in quick rhythmic hops. |
+| **Squid & Glow Squid** | **Squid:** Dark navy-blue cylindrical mantle with 8 trailing tentacles. **Glow Squid:** Bioluminescent turquoise-cyan body with glowing neon-aqua speckles. | **Swims by Jet Propulsion:** Pulses its tentacles open and closed in rhythmic bursts to propel itself through water; squirts a cloud of black/glowing ink when hurt. |
+| **Fish (Cod, Salmon, Pufferfish, Tropical)** | **Cod:** Tan streamlined fish. **Salmon:** Reddish-pink/olive fish (3 sizes). **Pufferfish:** Spiky yellow-tan fish that inflates into a spiked balloon when approached. **Tropical Fish:** 2 body shapes $\times$ 6 patterns $\times$ 15 base/pattern colors. | **Swims in Schools:** Dart in coordinated groups underwater; flop helplessly on land until suffocating. |
+| **Bat** | Tiny dark-brown winged rodent with large pointed ears and small wings. | **Flies & Hangs:** Hangs upside-down from cave ceilings when idle; flutters erratically through dark caverns when disturbed. |
+
+### B. Neutral & Hostile Monsters (Appearance & Locomotion)
+
+| Monster | Exact Visual Appearance & Texture | Locomotion & Movement Behavior |
+| --- | --- | --- |
+| **Zombie Variants (Husk, Drowned, Zombie Villager)** | **Husk:** Sun-dried tan-sand desert zombie in tattered rags (immune to sunlight). **Drowned:** Blue-green waterlogged zombie with glowing cyan eyes/mouth and seaweed strands. | **Walks & Swims:** Shambling outstretched-arms walk; Drowned walk along ocean floors or swim smoothly underwater, throwing Tridents. |
+| **Skeleton Variants (Stray, Bogged, Wither Skeleton)** | **Stray:** Frost-blue skeleton in ragged gray cloak (shoots Slowness arrows). **Bogged:** Moss-and-mushroom-covered swamp skeleton (shoots Poison arrows). **Wither Skeleton:** Tall ($2.4\text{m}$) charred black-coal skeleton wielding a Stone Sword. | **Walks & Strafes:** Skeletons/Strays/Bogged sidestep and circle-strafe around players while aiming; Wither Skeletons sprint rapidly in straight melee charges. |
+| **Cave Spider** | Compact ($0.7\text{m}$ wide) dark blue-green spider with glowing red eyes; fits through $1\times 1$ gaps. | **Climbs & Leaps:** Scuttles rapidly, climbs vertical walls, and pounces short distances to inflict Poison. |
+| **Slime & Magma Cube** | **Slime:** Translucent bright lime-green gelatinous cube housing a darker green inner core with two eyes and a mouth (3 sizes). **Magma Cube:** Dark charcoal-crimson cube that splits open like an accordion revealing a glowing yellow-orange molten core. | **Hops:** Moves exclusively in rhythmic square hops; splits into 2–4 smaller slimes upon death. |
+| **Phantom** | Flat blue-gray skeletal manta-ray undead monster with glowing green eyes, exposed rib-wings, and a long trailing tail. | **Swoops & Glides:** Circles high in the night sky above insomniac players, then folds its wings to dive-bomb downward before pulling back up. |
+| **Silverfish & Endermite** | **Silverfish:** Tiny segmented silver-gray bristled insect. **Endermite:** Tiny dark-purple fuzzy bug emitting purple Ender particles. | **Scuttles:** Writhing, rapid side-to-side floor-hugging scuttle; Silverfish hide inside Infested Stone blocks. |
+| **Guardian & Elder Guardian** | **Guardian:** Teal-blue puffer-like prismarine orb with a single giant cyclops eye, orange spikes, and an articulated tail. **Elder Guardian:** Massive pale-cream/purple boss variant. | **Swims & Floats:** Swims underwater using its tail fin, firing a color-shifting laser beam; hops awkwardly on land while shooting spikes. |
+| **Pillager, Vindicator, Evoker, Ravager** | **Pillager:** Gray-skinned Illager in dark leather vest holding a Crossbow. **Vindicator:** Dark robe, sprints with an Iron Axe raised. **Evoker:** Black-and-gold trimmed robe, waves arms to summon fangs/Vexes. **Ravager:** Massive $2.2\text{m}$ armored gray bull-beast with a villager-like face and horns. | **Marches & Charges:** Illagers walk/sprint human-style; Ravagers stampede at high speed, smashing crops and leaves in their path. |
+| **Vex** | Tiny pale-blue ghostly winged imp holding an Iron Sword; turns red with furious brows when charging. | **Phases Through Walls:** Flies freely through solid blocks and walls without collision to ambush targets. |
+| **Piglin, Piglin Brute & Zoglin** | **Piglin:** Pink-skinned humanoid pig with floppy ears, white tusks, and golden armor/sword. **Piglin Brute:** Black tunic with gold arm-band and Golden Axe. **Zoglin:** Rotting green-and-pink undead boar with glowing white eyes. | **Walks & Sprints:** Piglins walk/sprint and inspect gold items in hand; Zoglins charge relentlessly at almost every living entity nearby. |
+| **Hoglin** | Huge $1.4\text{m}$ tall wild Nether boar with dark pink hide, coarse bristle mane, and massive curved white tusks. | **Charges & Flings:** Runs on four hooves and swings its tusks upward to launch targets into the air; flees from Warped Fungi. |
+| **Strider** | Squat magenta-red cube head with long gray string-hair strands on the sides, sad eyes, and two tall thin legs (turns shivering purple outside lava). | **Walks on Lava:** Strides smoothly across the surface of lava lakes as if walking on solid ground; moves slowly on land. |
+| **Shulker** | Purple-pink box shell matching Purpur blocks, hiding a small yellow-white creature head with eyes inside. | **Stationary / Teleports:** Clings rigidly to block faces, opens its shell lid to fire homing Levitation bullets, and teleports to nearby blocks if damaged. |
+
+MINECRAFT — Exhaustive Master Game Specification & Design DocumentGame Title: MinecraftGenre: High-FPS 3D Voxel Sandbox, Survival, Creative, Exploration, Building, Automation, AI & MultiplayerModes: Offline Single-Player, Online / LAN Multiplayer Rooms (Text Chat T & 3D Spatial Microphone Voice Chat V), Creative, Survival, Spectator, and Architect's ChronicleCamera Perspectives: First-Person, Third-Person Back, and Third-Person Front (F5 toggle)Core Engine Targets: Chunked terrain (16×128×16 or 16×64×16), face culling, greedy meshing, dynamic chunk streaming, frustum culling, PBR materials, dynamic lighting, deterministic fluid simulation, data-driven 100+ block & 1,000+ craftable item registries, and persistent local saves.Table of ContentsEngine Architecture, Chunk Streaming, Greedy Meshing & PersistenceVisual Direction, PBR Materials, Lighting & Day/Night CycleExhaustive Block Registry (120+ Blocks, Visual Looks & Mechanics)Exhaustive Craftable, Smeltable & Combinable Items System (1,000+ Items & Recipes)Multi-Block Fluid Physics & Water + Lava ReactionsGravity, Fire, Ice, Crops, Redstone Circuits & Block LogicPlayer Controller, Camera (F5), Modes & Movement MechanicsPets, Farm Animals, Villagers & Hostile Monsters (Visual Looks & AI)Biomes, Underground Strata, Caves & LandmarksGTA 5-Style Tactical Radar & Full-Screen Map (M)Creator Panel (C) & Custom Modes (Including Architect's Chronicle)Offline Single-Player, LAN Rooms, Text Chat (T) & Spatial Mic Voice (V)1. Engine Architecture, Chunk Streaming, Greedy Meshing & Persistence1.1 Chunked World Organization & StreamingPartition the 3D world into chunks of size 16 × Y × 16 (for example 16 × 128 × 16 or 16 × 64 × 16), indexed by (chunkX, chunkZ) and local coordinates (lx, y, lz) where 0 <= lx < 16 and 0 <= lz < 16.Stream chunks around the player's active coordinates dynamically based on configured render distance, loading/generating new chunks and unloading distant chunks to maintain steady memory usage and frame times.Track a dirty flag per chunk (and adjacent neighbor chunks when edge blocks or fluids change) so only modified regions rebuild their meshes instead of regenerating the whole world.Apply camera frustum culling so chunks and entities outside the current view frustum are skipped during rendering.1.2 Face Culling & Greedy MeshingFace Culling: Do not emit faces between two touching solid opaque blocks. Only emit outward-facing quads adjacent to air, transparent/cutout blocks (where appropriate), or non-occluding faces.Greedy Meshing: Across each slice and face direction (+X, -X, +Y, -Y, +Z, -Z), scan matching block/material/light cells and merge adjacent coplanar cells into larger rectangles (width × height) to cut vertex and draw-call overhead while keeping accurate block hitboxes, selection outlines, and per-block interaction.Mesh Attributes: Generate clean vertex positions, face normals, texture/atlas UVs, block-type/material index, and corner ambient occlusion (AO) shading.1.3 Save & Load PersistenceSave modified blocks (delta map or serialized chunk snapshots), player position, pitch/yaw, selected hotbar slot, full inventory/containers, active game mode, time of day, GPS waypoints, custom blueprints, and world seed to persistent storage (localStorage / IndexedDB / save files).Support manual save, periodic auto-save, load saved world, and clean world reset.2. Visual Direction, PBR Materials, Lighting & Day/Night Cycle2.1 Physically Based Rendering (PBR) LookGive every block, item, character, pet, animal, villager, and monster crisp voxel silhouettes with layered PBR surface response:Albedo / Base Color: Distinct color palettes for grass blades, rich soil, stone/deepslate layers, wood grains, leaves, ores, metals, gems, and 16-color dyed blocks.Roughness: High roughness (matte) on grass, dirt, sand, gravel, wool, and raw stone; low roughness (glossy/smooth) on ice, glass, polished stone, gems, and metals.Metallic: High metallic response on iron, gold, copper, and netherite blocks, ingots, tools, and armor; non-metallic (0.0) on stone, wood, dirt, and organics.Normal / Bump Relief: Subtle surface height/normal detail for brick mortar, wood grain fibers, stone cracks, cobblestone edges, and embedded ore veins.Emissive Glow: Self-illumination on lava, torches, soul torches, lanterns, soul lanterns, glowstone, sea lanterns, shroomlights, redstone lamps (powered), end rods, campfires, and glowing ore/magma accents.2.2 Day/Night Lighting & AtmosphereDrive sun and moon elevation angles along a 24-hour cycle (0.0 to 24.0 hours) with presets for Dawn, Noon, Sunset, and Midnight.Update sky dome/background color, distance fog color and density, hemisphere sky/ground light, and directional sun/moon shadow casting smoothly as time advances.Couple darkness/nighttime with monster spawning rules and indoor/outdoor light visibility.3. Exhaustive Block Registry (120+ Blocks, Visual Looks & Mechanics)Every block is defined in a data-driven block table with:id (unique string/numeric key)name (display name)category (terrain, stone, ore, wood, foliage, building, fluid, light, utility, redstone, hazard)hardness & blastResistancerequiredTool (none, pickaxe, axe, shovel, hoe, shears) & harvestTier (0 hand/wood, 1 stone, 2 copper/iron, 3 diamond, 4 netherite)isSolid, isLiquid, isTransparent, emitsLight (0–15), isFlammable, isGravityAffected, dropsItemId, and pbr (albedo, roughness, metallic, emissive).3.1 Soil, Sand, Gravel & Natural Surface Blocks (14 Blocks)Grass Block: Lush green top blade texture with earthy brown side skirt and dirt bottom; spreads onto adjacent dirt with light above.Dirt: Warm brown soil with subtle clod texture; base ground layer across plains, forests, and hills.Coarse Dirt: Darker, rougher brown soil with small pebbles/clumps; stays coarse dirt and does not turn into grass.Podzol: Deep dark-brown forest soil topped with pine needles/humus; found in taiga/spruce biomes.Mycelium: Purple-gray fungal crust with dark spots; spreads on nearby dirt/mycelium.Sand: Pale warm golden-tan grains with fine gritty texture; falls under gravity when unsupported below.Red Sand: Warm terracotta-orange desert sand with gritty grain; falls under gravity when unsupported.Gravel: Mixed gray pebbles and small stones; falls under gravity and can drop flint when mined.Clay Block: Smooth cool-gray sedimentary block found near water; breaks into clay balls.Snow Block: Crisp white packed snow block with soft matte surface.Snow Layer: Thin white snow cap that can stack or cover ground in cold/snowy areas.Ice: Translucent pale-blue frozen water block; low friction surface and melts near bright heat/light.Packed Ice: Denser, clearer frozen ice block; slick movement and does not melt from torch light.Blue Ice: Deep icy-blue ultra-dense ice with extra-low friction and strong cold/light resistance.3.2 Stone, Deepslate, Rock & Mineral Blocks (26 Blocks)Stone: Classic medium-gray quarried rock forming primary underground layers; drops cobblestone unless mined with Silk Touch.Cobblestone: Rough, uneven chiseled gray rock blocks; placed by builders or formed by water + lava reactions.Mossy Cobblestone: Rough gray cobblestone overgrown with lush green moss patches.Smooth Stone: Clean, uniform pale-gray dressed stone block.Stone Bricks: Neat rectangular dressed stone masonry blocks.Mossy Stone Bricks: Stone bricks covered with green moss patches.Cracked Stone Bricks: Stone bricks marked with dark fracture lines.Chiseled Stone Bricks: Carved stone brick face with geometric relief patterns.Deepslate: Dark charcoal-slate deep rock with layered grain.Cobbled Deepslate: Rough dark slate chunks dropped when mining deepslate without Silk Touch.Polished Deepslate: Smooth, dark refined deepslate with subtle sheen.Deepslate Bricks: Dark architectural masonry blocks crafted from polished deepslate.Deepslate Tiles: Fine dark slate tile blocks for floors and walls.Granite: Speckled reddish-pink/salmon mineral rock.Polished Granite: Smooth, refined reddish-pink granite block.Diorite: Crisp white-and-black speckled stone.Polished Diorite: Smooth, clean white-and-black diorite block.Andesite: Cool medium-gray fine-grained rock.Polished Andesite: Smooth, uniform cool-gray andesite block.Tuff: Dark olive-gray volcanic ash stone found in deep layers.Calcite: Creamy off-white crystalline rock layer.Dripstone Block: Brownish-tan layered mineral rock.Sandstone: Warm tan layered sand-stone block.Cut Sandstone & Smooth Sandstone: Architectural tan sandstone with border trim or clean smooth finish.Red Sandstone: Warm rust-orange sandstone made from red sand.Obsidian & Crying Obsidian: Ultra-hard glossy black volcanic glass (high blast resistance) and purple-veined crying obsidian.Bedrock: Indestructible dark patterned base layer at the bottom of the world.3.3 Ores & Metal/Gem Storage Blocks (22 Blocks)Coal Ore & Deepslate Coal Ore: Stone/deepslate with dark charcoal coal veins; drops coal.Copper Ore & Deepslate Copper Ore: Stone/deepslate with oxidized teal-green & copper flecks; drops raw copper.Raw Copper Block & Block of Copper: Dense raw copper block and refined metallic copper block (with weathering stages).Iron Ore & Deepslate Iron Ore: Stone/deepslate with warm tan-peach iron veins; drops raw iron.Raw Iron Block & Block of Iron: Heavy raw iron storage block and bright metallic gray iron block.Gold Ore & Deepslate Gold Ore: Stone/deepslate with bright yellow gold veins; drops raw gold.Raw Gold Block & Block of Gold: Raw gold storage block and gleaming golden block.Redstone Ore & Deepslate Redstone Ore: Stone/deepslate with crimson veins that glow when touched/mined; drops redstone dust.Block of Redstone: Bright crimson power-source block emitting a constant redstone signal.Lapis Lazuli Ore & Deepslate Lapis Ore: Stone/deepslate with deep royal-blue lapis lazuli; drops lapis lazuli.Block of Lapis Lazuli: Rich deep-blue decorative/storage block.Emerald Ore & Deepslate Emerald Ore: Stone/deepslate with vibrant emerald-green gems; drops emerald.Block of Emerald: Bright green gemstone block.Diamond Ore & Deepslate Diamond Ore: Stone/deepslate with sparkling cyan-blue diamond crystals; drops diamond.Block of Diamond: Radiant cyan-blue crystalline block.Nether Quartz Ore: Light pale-gray rock veined with bright white quartz; drops nether quartz.Ancient Debris & Block of Netherite: Dark heat-resistant netherite precursor and dark metallic purple-gray netherite block.Block of Coal: Deep matte-black fuel/storage block.3.4 Wood, Leaves, Building & Dyed Blocks (38 Blocks)Oak Log, Stripped Oak Log, Oak Wood & Oak Planks: Classic warm brown timber set.Spruce Log, Stripped Spruce Log, Spruce Wood & Spruce Planks: Dark rich brown northern timber set.Birch Log, Stripped Birch Log, Birch Wood & Birch Planks: Pale cream-white bark with dark knots and light golden-tan planks.Jungle Log, Stripped Jungle Log, Jungle Wood & Jungle Planks: Warm reddish-brown tropical timber set.Acacia Log, Stripped Acacia Log, Acacia Wood & Acacia Planks: Grayish bark with vibrant orange-tan planks.Dark Oak Log, Stripped Dark Oak Log, Dark Oak Wood & Dark Oak Planks: Very dark chocolate bark and deep brown planks.Cherry Log, Stripped Cherry Log, Cherry Wood & Cherry Planks: Soft pinkish-brown wood set.Mangrove Log, Stripped Mangrove Log, Mangrove Wood & Mangrove Planks: Deep reddish timber set.Leaves (8 Tree Types): Semi-transparent leafy blocks for Oak, Spruce, Birch, Jungle, Acacia, Dark Oak, Cherry, and Mangrove; can drop saplings or apples.Glass, Tinted Glass & Stained Glass: Transparent clear glass, light-blocking tinted glass, and dyed colored glass blocks/panes.Wool (16 Colors): Soft woven textile blocks across 16 colors (White, Light Gray, Gray, Black, Brown, Red, Orange, Yellow, Lime, Green, Cyan, Light Blue, Blue, Purple, Magenta, Pink).Terracotta & Dyed Terracotta (17 Blocks): Baked clay blocks in natural terracotta and 16 dyed colors.Concrete Powder & Concrete (32 Blocks): Gravity-affected powder blocks in 16 colors that harden into solid matte concrete when touching water.Netherrack, Nether Bricks, Basalt & Blackstone: Crimson nether stone, dark reddish-brown bricks, striped dark basalt, and deep charcoal blackstone.End Stone & Purpur Block: Pale cream-yellow end stone and purple architectural blocks.Bookshelf: Wooden frame filled with colorful book spines.Moss Block: Lush velvety green block.Magma Block: Glowing dark rock with hot orange-red cracks; emits light and damages entities standing on it without fire resistance.Soul Sand & Soul Soil: Dark brownish-gray soul blocks; slow movement and create bubble columns in water.Honeycomb Block & Honey Block: Golden-amber honeycomb block and sticky golden honey block (slows movement & dampens fall speed).Slime Block: Bright lime-green bouncy block; bounces entities and sticks to adjacent blocks when pushed/pulled by pistons.Pumpkin, Carved Pumpkin & Jack o'Lantern: Ribbed orange gourd, carved face pumpkin, and lit pumpkin lantern.Melon Block: Striped green melon block.Hay Bale: Golden bundled wheat block.Bricks: Classic reddish-terracotta clay brick masonry.Quartz Block, Chiseled Quartz & Smooth Quartz: Clean white crystalline blocks.Prismarine & Sea Lantern: Aquatic greenish-teal blocks and glowing sea lantern.Target Block: Red-and-white target block emitting a redstone signal when hit.Note Block: Musical block playing pitched notes based on supporting block and redstone signal.Jukebox: Music disc player block.Lodestone: Carved stone compass-anchor block storing target coordinates.3.5 Fluids, Light Sources, Utility, Redstone & Hazard Blocks (22 Blocks)Water (Source & Flowing Levels): Translucent blue fluid with flow levels, swimming/buoyancy, fire extinguishing, and cobblestone/obsidian reactions with lava.Lava (Source & Flowing Levels): Bright orange-red molten fluid emitting strong light, fire/burn hazard, slow movement, and cobblestone/obsidian reactions with water.Torch & Soul Torch: Warm flame torch and cyan-blue soul flame torch (floor or wall mounted).Lantern & Soul Lantern: Hanging or standing metal cage lanterns with warm or cyan-blue light.Glowstone: Warm golden-yellow crystalline light block.Shroomlight: Bright orange-red organic light block.Redstone Lamp: Switchable light block that lights up when powered by redstone.End Rod: Slender white-cream light rod.Campfire & Soul Campfire: Crackling log fire with smoke/embers; cooks food items and emits warm or cyan light.Crafting Table: 3×3 crafting workstation block.Furnace, Blast Furnace & Smoker: Smelting workstations for ores, food, glass, and materials.Chest & Ender Chest: Container block and dimension-linked personal storage chest.Anvil (Normal, Chipped, Damaged): Workstation for repairing, renaming, and combining gear.Enchanting Table: Obsidian-and-diamond table for applying enchantments/upgrades.Brewing Stand: Station for brewing potions and elixirs.Redstone Dust: Signal wire block carrying power levels (0–15) across blocks and step-ups/step-downs.Lever, Button & Pressure Plates: Manual and entity-triggered redstone signal sources.Piston & Sticky Piston: Mechanical push/pull blocks that extend to push (and sticky pistons retract) connected blocks up to a push limit.Observer: Detects adjacent block changes and outputs a short redstone pulse.Doors, Trapdoors, Fences, Fence Gates, Slabs, Stairs, Walls & Ladders: Structural, traversal, and climbing blocks with open/closed states and directional/step geometry.TNT: Explosive block triggered by fire, lava, or redstone—flashes, detonates with blast radius, breaks eligible blocks, applies knockback, and spawns debris/particles.4. Exhaustive Craftable, Smeltable & Combinable Items System (1,000+ Items & Recipes)4.1 Data-Driven Item & Recipe Registry (1,000+ Craftable Items)Instead of hardcoding 1,000 repetitive if/else checks, use a Data-Driven Item & Recipe Engine:Item Record: id, name, category, stackSize (e.g., 64 or 1 for non-stackable gear), maxDurability, attackDamage, attackSpeed, miningSpeed, harvestTier, armorPoints, toughness, foodPoints, saturation, effectId, colorHex, and icon/meshId.Recipe Types:shaped_2x2 (hand crafting grid)shaped_3x3 (crafting table grid)shapeless (order-independent item combinations/conversions)smelting (furnace / campfire)blasting (blast furnace fast ore/metal smelting)smoking (smoker fast food cooking)stonecutting (clean stone/brick/copper/quartz variant cutting)smithing (upgrading/combining gear and materials)dyeing (coloring wool, carpets, beds, banners, candles, glass, terracotta, concrete powder)4.2 How 1,000+ Craftable Items & Recipes Are StructuredWood Family Sets (8 Wood Types × ~14 Craftable Variants = ~112 Items): Planks, sticks, crafting tables, chests, slabs, stairs, fences, fence gates, doors, trapdoors, buttons, pressure plates, boats, and signs/hangings.Stone, Deepslate, Sandstone & Mineral Sets (~160+ Items): Cobblestone, stone bricks, mossy/cracked/chiseled stone bricks, smooth stone, cobbled/polished/brick/tile deepslate, granite/diorite/andesite polished & slab/stair/wall variants, sandstone/red sandstone variants, quartz variants, prismarine variants, and mineral/ingot/gem storage blocks & nuggets.16-Color Dyed Sets (~190+ Items): Wool blocks, carpets, beds, banners, candles, stained glass blocks, stained glass panes, dyed terracotta, glazed terracotta, concrete powder, and hardened concrete across 16 colors.Tool, Weapon & Armor Tiers (~140+ Items): Across Wood, Stone, Copper, Iron, Gold, Diamond, and Netherite/Mythic tiers:Pickaxes, Axes, Shovels, Hoes, Swords, Daggers, SpearsHelmets, Chestplates, Leggings, BootsPlus Bows, Crossbows, Shields, Arrows, Tipped Arrows, Buckets (Empty, Water, Lava, Milk), Shears, Flint & Steel, Compasses, Clocks, Spyglasses, Saddles, Leads, Name Tags, and Minecarts/Rails.Food, Baking, Cooking & Brewing (~160+ Items): Raw & cooked meats/fish/produce, breads, pastries/cakes/cookies, stews/soups, golden/enchanted foods, honey items, and potions/elixirs/splash & lingering brews across multiple tiers/durations.Redstone, Mechanical, Lighting & Creator Items (~240+ Items): Redstone torches, repeaters, comparators, pistons, sticky pistons, observers, droppers, dispensers, hoppers, redstone lamps, note blocks, jukeboxes, TNT, lanterns/soul lanterns, torches/soul torches, campfires/soul campfires, firework rockets/stars, and special crafting/utility components—easily exceeding 1,000+ craftable/obtainable items and recipes with instant search, category tabs, and recipe lookup.5. Multi-Block Fluid Physics & Water + Lava Reactions5.1 Multi-Block Spreading SimulationRun a deterministic Fluid Tick Loop (tickRate ~0.10s–0.20s) over active fluid blocks and nearby chunks.Fluid State per Block: { type: 'water' | 'lava', isSource: boolean, level: number } where level = 0 for source blocks and 1..MAX_SPREAD for flowing blocks (MAX_SPREAD = 7 for water; 3..7 configurable for lava).Downward & Horizontal Spread Rules:Downward Flow (y - 1): If the block directly below is air or a replaceable/non-solid space, spawn/update a flowing fluid block below with level = 1 (fresh downward stream).Horizontal Spread (±x, ±z): When a fluid block cannot flow downward (or alongside downward flow), check horizontal neighbors. If a neighbor is air/passable and current.level < MAX_SPREAD, spread fluid with level = current.level + 1, updating affected chunks and rebuilding dirty chunk meshes cleanly.Source Support & Decay: Non-source flowing blocks recalculate their required spread level from adjacent higher-level/source neighbors; if their support is removed or blocked, excess flowing water/lava recedes/dries cleanly while source blocks remain until scooped or reacted.5.2 Water + Lava = Cobblestone & Obsidian ReactionsWater + Lava Source $\rightarrow$ Obsidian: When flowing or source water contacts a Lava Source (isSource === true), convert that lava source block into Obsidian, emit steam/smoke particles, and play a cooling/hiss sound effect.Water + Flowing Lava $\rightarrow$ Cobblestone: When flowing water meets a Flowing Lava block (isSource === false) horizontally or diagonally, convert the flowing lava block into Cobblestone (classic cobblestone generator behavior) with steam particles and sound.Flowing Lava + Water $\rightarrow$ Cobblestone / Stone: When flowing lava moves into or contacts water, convert the contacted fluid/lava cell into Cobblestone (or Stone when lava falls onto water from above) and mark affected chunks dirty so players can build reliable cobblestone generators and lava barriers.Bucket Controls: Using an empty bucket on a source water or lava block collects it into a filled bucket; using a filled bucket places a source block at the target position.6. Gravity, Fire, Ice, Crops, Redstone Circuits & Block Logic6.1 Gravity & Falling BlocksBlocks with isGravityAffected = true (Sand, Red Sand, Gravel, Concrete Powder) check the block at (x, y - 1, z).If the space below is air, water, or passable, convert the block into a falling physics entity that accelerates downward under gravity (g), collides with solid blocks below, snaps into grid coordinates (x, landY, z), and if Concrete Powder lands in or touches water, hardens into Concrete.6.2 Fire, Ignition & Ice/Heat RulesFire & Burn Spread: Lava, flint & steel, and fire blocks can ignite flammable blocks (isFlammable = true: wood logs, planks, leaves, wool, hay) and spread fire to adjacent flammable faces over tick intervals, spawning flame/smoke particles and extinguishing near water or rain/cooldown.Ice & Temperature: Ice blocks melt into water when exposed to high nearby light/heat (torches, lanterns, lava) or warm biome temperatures; water in freezing cold zones can freeze into ice.Crop & Sapling Growth: Planted seeds/crops and saplings advance growth stages over time when light and soil/moisture conditions are met; bone meal / fertilizer can accelerate growth stages.6.3 Redstone Power, Pistons, Doors & TNTSignal Propagation: Power sources (Redstone Block, Redstone Torch, Lever, Button, Pressure Plate, Observer) emit power (0–15) that travels along Redstone Dust (stepping up one block and down multiple blocks) and powers adjacent/targeted components.Actuators & TNT:Pistons & Sticky Pistons: Extend when powered, pushing a line of movable blocks (up to a configurable push limit), and Sticky Pistons pull the front block back when retracted (while Slime/Honey blocks can link adjacent blocks when moved).Doors, Trapdoors & Redstone Lamps: Open/close or toggle light emission in response to redstone power.TNT: Ignites when powered by redstone, touched by fire/lava, or activated; flashes, counts down a fuse, and detonates with blast radius, block breaking, entity knockback, and particle effects.7. Player Controller, Camera (F5), Modes & Movement Mechanics7.1 Camera Perspectives (F5) & Articulated Player RigPress F5 to cycle smoothly through:First-Person Camera: Positioned at eye height from the player with held item/tool viewmodel and center crosshair targeting.Third-Person Back Camera: Positioned behind and slightly above the player looking forward, showing the full animated player character rig (head, torso, left/right arms, left/right legs, held item, armor) with obstacle/wall distance clamping so the camera does not clip inside solid terrain.Third-Person Front Camera: Positioned in front of the player facing toward the character so players can see their character's front, face, gear, and walk/swim/fly animations.7.2 Controls & Movement ModesWASD: Move forward, backward, and strafe along camera horizontal orientation.Space: Jump in Survival (with coyote/ground check and gravity); ascend vertically in Creative, Spectator, or Architect's Chronicle.Shift: Sneak/crouch in Survival (prevents walking off block edges and lowers hitbox); descend vertically while flying in Creative, Spectator, or Architect's Chronicle.Ctrl / Sprint: Increase movement speed (consuming stamina/hunger in Survival where enabled).Left Click: Break targeted block (scaled by tool & block hardness in Survival; instant in Creative/Architect) or melee/ranged attack monsters/entities.Right Click: Place selected block against hit face normal, use item/bucket/food/potion, or interact with chests/workstations/doors/pets/villagers.1–9 & Scroll Wheel: Select hotbar slot.E / I: Open/close Inventory & Crafting screen.F5: Cycle 1st-Person / 3rd-Person Back / 3rd-Person Front camera.M: Open/close Full-Screen GTA 5-Style Tactical Map.C: Open/close Creator Panel.T or Enter: Open/focus Text Chat.Hold V: Push-to-talk 3D spatial microphone voice chat.8. Pets, Farm Animals, Villagers & Hostile Monsters (Visual Looks & AI)8.1 Tameable PetsWolf / Dog: Gray-and-white quadruped with perked ears and tail; roams forests/plains, can be tamed with bones/treats, sits/stands/follows the player, displays collar/tamed state, and attacks hostile monsters threatening the player.Cat: Sleek feline with distinct fur patterns (tabby, calico, tuxedo, white/black) and upright tail; can be tamed with fish, follows/sits near the player, and deters creepers.Horse: Tall four-legged mount with mane and tail in varied coat colors; can be ridden with saddle, jumps obstacles, and carries the rider across terrain.Parrot, Axolotl & Allay: Colorful shoulder/perch bird, smiling aquatic amphibian with frilled gills, and floating light-blue helper sprite that follows/collects items.8.2 Farm Animals & VillagersSheep: Woolly white/colored four-legged animal with head and legs; grazes grass, regrows wool after shearing, and drops wool and mutton.Cow: Broad-bodied horned/spotted farm animal; wanders pastures and drops leather and beef.Pig: Pink snouted farm animal; wanders and drops porkchop.Chicken: Small white feathered bird with red comb/wattle and wings; flaps/walks and drops feathers and chicken/eggs.Rabbit & Bee: Hopping long-eared woodland animal and buzzing striped pollinator around flowers/hives.Villagers: Humanoid village residents in profession robes/outfits; walk paths/villages, stand near job workstations, and interact with players.8.3 Hostile Monsters & AI State MachineEvery monster uses a clear AI state machine (IDLE, WANDER, DETECT, CHASE, ATTACK, FLEE/COOLDOWN, DEAD) with terrain step-up, line-of-sight checks, knockback, health points, damage flash, and loot drops:Zombie & Husk: Shambling greenish-gray undead (or tan-brown desert Husks) with outstretched arms; spawn in dark areas/night, detect nearby players, walk/step toward target, and deal melee damage.Skeleton & Stray: Pale bony archer (or frost-tinted Stray) holding a bow; keeps mid-range distance, aims at the player, and fires arrows with cooldowns.Creeper: Green textured four-legged stalker with a grim face; approaches close to the player silently, starts a fuse timer with swelling/hissing warning, and explodes with blast damage and terrain destruction if not slain first.Spider & Cave Spider: Low-slung eight-legged predator with glowing eyes; moves quickly, climbs vertical block walls, and lunges at nearby targets.Enderman: Tall, slender dark-purple-and-black entity with glowing purple eyes; teleports short distances, becomes hostile if stared at directly, can pick up/place select blocks, and strikes hard in melee.Slime & Phantom: Cubic translucent green bouncing monster (splits into smaller slimes when defeated) and winged night/insomnia sky predator that swoops down on players.Dungeon / Night Bosses: High-HP armored/brutal guardians with multi-phase/telegraphed attacks, knockback resistance, and rare boss drops.9. Biomes, Underground Strata, Caves & LandmarksGenerate continuous multi-biome worlds using layered noise (elevation, temperature, moisture):Plains: Green grassy hills, flowers, scattered oak trees, villages, and farm animals/horses.Forest, Birch Forest & Cherry Grove: Dense leafy canopies, mushrooms, fallen wood, and soft pink cherry groves.Taiga & Snowy Peaks: Spruce/pine forests, podzol, snow cover, ice/packed ice peaks, and cold wildlife.Desert & Badlands: Golden/red sand dunes, sandstone outcrops, cacti/dry scrub, ruins/temples, and husks.Mountains & Cliffs: Steep rocky ridges, stone/deepslate cliffs, waterfalls, and exposed ore veins.Swamp & Coast/Beaches: Sandy beaches, shallow water channels, clay beds, lily pads/reeds, and slimes/water life.Underground Strata & Caves: Topsoil → Stone → Deep Deepslate/Tuff/Calcite → Bedrock, carved with winding cave tunnels, open caverns, lava pockets, and depth-scaled ore veins (Coal, Copper, Iron, Gold, Redstone, Lapis, Emerald, Diamond, Ancient Debris).10. GTA 5-Style Tactical Radar & Full-Screen Map (M)Corner Tactical Radar: Live top-down minimap in the HUD showing surrounding terrain/biome/elevation colors, player marker and facing cone, active GPS waypoint, and nearby creatures/players.Full-Screen Tactical Map (M): Toggle a large interactive tactical map displaying:Topographic/biome/elevation overview of the world.Zoom/pan controls, coordinate grid, player position & facing direction, and saved waypoints.GPS Navigation Line: Draws a clear route line from the player to the active waypoint.Click-to-Teleport: Clicking on the radar or full-screen map sets a waypoint and teleports the player safely above the ground at that location.11. Creator Panel (C) & Custom Modes (Including Architect's Chronicle)Press C to toggle the Creator Panel with instant world and mode controls:Mode Switcher:Creative: Free flight, instant block breaking, unlimited placement/reach.Survival: Gravity, collision, health/stamina, mining progression, crafting, and monster combat.Spectator: Free noclip camera movement through terrain and blocks.Architect's Chronicle: Builder/creator mode combining flight, structure/blueprint tools, and world chronicle markers/notes for documenting builds and landmarks.Time of Day Controller: Slider and quick presets (Dawn, Noon, Sunset, Midnight) updating sun/moon angles, sky color, fog, lighting intensity, and night monster activity.Instant Structure Builder: One-click placement in front of the player for Watchtowers, Stone Keeps/Fortresses, Bridges, Arenas, Shelters, and Trees.Entity, Pet & Monster Spawner: Spawn friendly pets (wolves, cats, horses), farm animals, villagers, or hostile monsters (zombies, skeletons, creepers, spiders, endermen, slimes) on demand.World Management: Teleport to spawn/overlook, fill/clear areas, save world, load saved world, or generate a new world.12. Offline Single-Player, LAN Rooms, Text Chat (T) & Spatial Mic Voice (V)Offline Single-Player: Full local gameplay with zero internet required once loaded, saving worlds and settings locally.Online / LAN Multiplayer Rooms: Host or join multiplayer rooms on local networks (LAN / Wi-Fi / hotspot) or room codes via WebSockets / WebRTC:Synchronize player positions, rotations, animations, held items, block edits, and room events.Show floating nametags above players and join/leave alerts.Text Chat (T / Enter): Open chat to send messages, read room history, and execute commands (/tp <x> <y> <z>, /time <0-24>, /mode <creative|survival|spectator|architect>, /give <item> <count>, /spawn <entity>).Spatial Microphone Voice Chat (V):Hold V (push-to-talk, with mute and mic-test options) to capture microphone audio and stream voice to players in the room.Apply 3D spatial distance attenuation (and stereo balance where supported) based on 3D distance and direction between speaker and listener so voices sound louder up close, fade out with distance, and display an active speaking indicator on the talking player.

@@ -1,0 +1,6 @@
+{
+  "name": "Voxel Realms Remastered — By KATHIR",
+  "description": "3D Voxel Sandbox Engine designed and created by Kathir with offline single-player, working online multiplayer, proximity voice chat, redstone circuits, mods, mobs, and multi-dimension biomes.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

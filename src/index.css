@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@layer base {
+  html,
+  body,
+  #root {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #12151e;
+    color: #f4f1ea;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    user-select: none;
+  }
+}
+
+.voxel-panel {
+  background: rgba(18, 22, 31, 0.9);
+  border: 2px solid #485266;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+.voxel-slot {
+  background: rgba(24, 28, 38, 0.88);
+  border: 2px solid #3c4352;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.55);
+}
+
+.voxel-slot-active {
+  background: rgba(45, 54, 72, 0.95);
+  border: 2px solid #f5b942;
+  box-shadow: 0 0 0 1px #1b1e26, inset 0 0 8px rgba(245, 185, 66, 0.35);
+}
+
+.pixel-render {
+  image-rendering: pixelated;
+}
